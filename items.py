@@ -78,9 +78,6 @@ directories = {
         'mode': '755',
         'owner': 'root',
         'group': 'root',
-        'triggers': {
-            'action:accept_terms',
-        }
     }
 }
 
@@ -95,8 +92,10 @@ if challenge_type == 'http-01':
 actions = {
     'accept_terms': {
         'command': '/opt/dehydrated/dehydrated --register --accept-terms',
-        'triggered': True,
+        'unless': 'test -f "$(/opt/dehydrated/dehydrated -e | '
+                  'grep \'ACCOUNT_KEY=\' | sed \'s/.*ACCOUNT_KEY="\(.*\)"/\\1/g\')"',
         'needs': [
+            'directory:/opt/dehydrated',
             'git_deploy:/opt/dehydrated',
             'file:/etc/dehydrated/config'
         ],
