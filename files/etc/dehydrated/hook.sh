@@ -60,7 +60,10 @@ deploy_cert() {
 
     # we allways generate a merged file
     cat "${FULLCHAINFILE}" "${KEYFILE}" > "${MERGEDFILE}"
-    ln -s "${MERGEDFILE}" "$(dirname "${MERGEDFILE}")/merged.pem"
+
+    # remove old merged symlink
+    test -f "$(dirname "${MERGEDFILE}")/merged.pem" && rm "$(dirname "${MERGEDFILE}")/merged.pem"
+    ln -s "merged-${TIMESTAMP}.pem" "$(dirname "${MERGEDFILE}")/merged.pem"
 
     {{ "\n".join(deploy_cert) }}
 }
