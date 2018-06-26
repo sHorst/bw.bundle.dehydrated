@@ -2,4 +2,4 @@
 
 # run dehydrated
 
-/opt/dehydrated/dehydrated -c >/dev/null
+/opt/dehydrated/dehydrated -c -g >/dev/null
