@@ -39,7 +39,7 @@ def add_dns_hooks(metadata):
         node_name = 'test'
         acme_pdns_api_config = metadata.get('dehydrated', {}).get('acme_pdns_api', {})
         user = acme_pdns_api_config.get('user', node_name)
-        password = acme_pdns_api_config.get('password', repo.libs.pw.get("acme_pdns_fsn-01.leela.ns1_{}".format(
+        password = acme_pdns_api_config.get('password', repo.vault.password_for("acme_pdns_fsn-01.leela.ns1_{}".format(
             node_name
         )))
         server = acme_pdns_api_config.get('server', 'ns1.ultrachaos.de')
