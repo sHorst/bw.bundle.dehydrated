@@ -1,6 +1,6 @@
 
-domains = set(node.metadata.get('dehydrated', {}).get('domains', []))
-challenge_type = node.metadata.get('dehydrated', {}).get('challenge_type', 'http-01')
+domains = set(node.metadata.get('dehydrated/domains', []))
+challenge_type = node.metadata.get('dehydrated/challenge_type', 'http-01')
 
 available_hooks = [
     'deploy_challenge',
@@ -112,7 +112,6 @@ actions = {
 
 git_deploy = {
     '/opt/dehydrated': {
-        'needs': ['directory:/opt/dehydrated'],
         'repo': 'ssh://github.com/lukas2511/dehydrated.git',
         'rev': 'master',
     }
