@@ -54,7 +54,7 @@ def add_dns_hooks(metadata):
                 'hooks': {
                     'deploy_challenge': {
                         'dns': [
-                            'curl -i -k "https://{user}:{password}@{server}:{port}?domain=$DOMAIN&token=$TOKEN_VALUE&'
+                            'curl -isk "https://{user}:{password}@{server}:{port}?domain=$DOMAIN&token=$TOKEN_VALUE&'
                             'action=deploy"'.format(
                                 user=user,
                                 password=password,
@@ -66,7 +66,7 @@ def add_dns_hooks(metadata):
                     },
                     'clean_challenge': {
                         'dns': [
-                            'curl -i -k "https://{user}:{password}@{server}:{port}?domain=$DOMAIN&token=$TOKEN_VALUE&'
+                            'curl -isk "https://{user}:{password}@{server}:{port}?domain=$DOMAIN&token=$TOKEN_VALUE&'
                             'action=clean"'.format(
                                 user=user,
                                 password=password,
