@@ -1,3 +1,13 @@
+
+defaults = {
+   'apt': {
+       'packages': {
+           'bsdextrautils': {'installed': True,},
+       }
+   }
+}
+
+
 @metadata_reactor
 def add_apache_certs(metadata):
     if not node.has_bundle("apache"):

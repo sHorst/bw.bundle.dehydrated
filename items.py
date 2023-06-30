@@ -97,7 +97,8 @@ actions = {
         'needs': [
             'directory:/opt/dehydrated',
             'git_deploy:/opt/dehydrated',
-            'file:/etc/dehydrated/config'
+            'file:/etc/dehydrated/config',
+            'pkg_apt:bsdextrautils',
         ],
     },
     'generate_certificates': {
@@ -105,7 +106,8 @@ actions = {
         'triggered': True,
         'needs': [
             'git_deploy:/opt/dehydrated',
-            'action:accept_terms'
+            'action:accept_terms',
+            'pkg_apt:bsdextrautils',
         ],
     }
 }
