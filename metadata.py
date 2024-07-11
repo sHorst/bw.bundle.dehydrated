@@ -71,7 +71,7 @@ def add_dns_hooks(metadata):
                                 server=server,
                                 port=port,
                             ),
-                            'sleep 5',
+                            'sleep 15',
                         ],
                     },
                     'clean_challenge': {
