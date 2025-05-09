@@ -93,7 +93,7 @@ actions = {
     'accept_terms': {
         'command': '/opt/dehydrated/dehydrated --register --accept-terms',
         'unless': 'test -f "$(/opt/dehydrated/dehydrated -e | '
-                  'grep \'ACCOUNT_KEY=\' | sed \'s/.*ACCOUNT_KEY="\(.*\)"/\\1/g\')"',
+                  'grep \'ACCOUNT_KEY=\' | sed \'s/.*ACCOUNT_KEY="\\(.*\\)"/\\1/g\')"',
         'needs': [
             'directory:/opt/dehydrated',
             'git_deploy:/opt/dehydrated',

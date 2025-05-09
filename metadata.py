@@ -2,7 +2,7 @@
 defaults = {
    'apt': {
        'packages': {
-           'bsdextrautils': {'installed': True,},
+           'bsdextrautils': {'installed': True, },
        }
    }
 }
