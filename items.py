@@ -1,6 +1,4 @@
-
-domains = set(node.metadata.get('dehydrated', {}).get('domains', []))
-challenge_type = node.metadata.get('dehydrated', {}).get('challenge_type', 'http-01')
+from copy import copy
 
 available_hooks = [
     'deploy_challenge',
@@ -12,27 +10,52 @@ available_hooks = [
     'exit_hook',
 ]
 
-hooks = {}
+files = {
+    '/etc/cron.daily/dehydrated': {
+        'source': 'etc/cron.daily/dehydrated',
+        'context': {
+            'challenge_types': sorted(list(node.metadata.get('dehydrated/challenge_types', {}).keys()))
+        },
+        'content_type': 'jinja2',
+        'owner': 'root',
+        'group': 'root',
+        'mode': "0755",
+    },
+}
+
+actions = {}
+
+default_hooks = {}
 for hook_name in available_hooks:
-    hooks[hook_name] = []
+    default_hooks[hook_name] = []
 
     for name, hook_hooks in sorted(
-        node.metadata.get('dehydrated', {}).get('hooks', {}).get(hook_name, {}).items(),
-        key=lambda x: x[0]
+            node.metadata.get('dehydrated', {}).get('hooks', {}).get(hook_name, {}).items(),
+            key=lambda x: x[0]
     ):
-        hooks[hook_name] += hook_hooks
+        default_hooks[hook_name] += hook_hooks
 
-files = {
-    '/etc/dehydrated/domains.txt': {
+for challenge_type, config in node.metadata.get('dehydrated/challenge_types', {}).items():
+    domains = set(config.get('domains', []))
+
+    hooks = {}
+    for hook_name in available_hooks:
+        hooks[hook_name] = copy(default_hooks[hook_name])
+
+        for name, hook_hooks in sorted(config.get('hooks', {}).get(hook_name, {}).items(), key=lambda x: x[0]):
+            hooks[hook_name] += hook_hooks
+
+    files[f'/etc/dehydrated/domains_{challenge_type}.txt'] = {
         'content': "\n".join(sorted(list(domains))) + "\n",
         'owner': 'root',
         'group': 'root',
         'mode': "0644",
         'triggers': {
-            'action:generate_certificates',
+            f'action:generate_certificates_{challenge_type}',
         }
-    },
-    '/etc/dehydrated/config': {
+    }
+
+    files[f'/etc/dehydrated/config_{challenge_type}'] = {
         'source': 'etc/dehydrated/config',
         'content_type': 'jinja2',
         'owner': 'root',
@@ -42,8 +65,8 @@ files = {
             'email': node.metadata.get('dehydrated', {}).get('email', 'stefan@ultrachaos.de'),
             'challenge_type': challenge_type,
         },
-    },
-    '/etc/dehydrated/hook.sh': {
+    }
+    files[f'/etc/dehydrated/hook_{challenge_type}.sh'] = {
         'source': 'etc/dehydrated/hook.sh',
         'content_type': 'jinja2',
         'owner': 'root',
@@ -58,15 +81,17 @@ files = {
             'request_failure': hooks['request_failure'],
             'exit_hooks': hooks['exit_hook'],
         },
-    },
-    '/etc/cron.daily/dehydrated': {
-        'source': 'etc/cron.daily/dehydrated',
-        'content_type': 'text',
-        'owner': 'root',
-        'group': 'root',
-        'mode': "0755",
-    },
-}
+    }
+
+    actions[f'generate_certificates_{challenge_type}'] = {
+        'command': f'/opt/dehydrated/dehydrated -f /etc/dehydrated/config_{challenge_type} -c',
+        'triggered': True,
+        'needs': [
+            'git_deploy:/opt/dehydrated',
+            'action:accept_terms',
+            'pkg_apt:bsdextrautils',
+        ],
+    }
 
 directories = {
     '/etc/dehydrated': {
@@ -81,35 +106,25 @@ directories = {
     }
 }
 
-# TODO: make both posible, some domains one way, and others the other
-if challenge_type == 'http-01':
+if 'http-01' in node.metadata.get('dehydrated/challenge_types', {}):
     directories['/var/www/dehydrated'] = {
         'mode': '755',
         'owner': 'root',
         'group': 'root',
     }
 
-actions = {
-    'accept_terms': {
-        'command': '/opt/dehydrated/dehydrated --register --accept-terms',
-        'unless': 'test -f "$(/opt/dehydrated/dehydrated -e | '
-                  'grep \'ACCOUNT_KEY=\' | sed \'s/.*ACCOUNT_KEY="\\(.*\\)"/\\1/g\')"',
-        'needs': [
-            'directory:/opt/dehydrated',
-            'git_deploy:/opt/dehydrated',
-            'file:/etc/dehydrated/config',
-            'pkg_apt:bsdextrautils',
-        ],
-    },
-    'generate_certificates': {
-        'command': '/opt/dehydrated/dehydrated -c',
-        'triggered': True,
-        'needs': [
-            'git_deploy:/opt/dehydrated',
-            'action:accept_terms',
-            'pkg_apt:bsdextrautils',
-        ],
-    }
+# will break, if we do not have any challenge_types, which means we cannot register
+challenge_type = list(node.metadata.get('dehydrated/challenge_types', {}).keys())[0]
+actions['accept_terms'] = {
+    'command': f'/opt/dehydrated/dehydrated -f /etc/dehydrated/config_{challenge_type} --register --accept-terms',
+    'unless': 'test -f "$(/opt/dehydrated/dehydrated -e | '
+              'grep \'ACCOUNT_KEY=\' | sed \'s/.*ACCOUNT_KEY="\\(.*\\)"/\\1/g\')"',
+    'needs': [
+        'directory:/opt/dehydrated',
+        'git_deploy:/opt/dehydrated',
+        f'file:/etc/dehydrated/config_{challenge_type}',
+        'pkg_apt:bsdextrautils',
+    ],
 }
 
 git_deploy = {

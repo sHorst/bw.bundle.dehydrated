@@ -2,4 +2,5 @@
 
 # run dehydrated
 
-/opt/dehydrated/dehydrated -c -g >/dev/null
+{% for challenge_type in challenge_types %}/opt/dehydrated/dehydrated -f /etc/dehydrated/config_{{ challenge_type }} -c -g >/dev/null
+{% endfor %}

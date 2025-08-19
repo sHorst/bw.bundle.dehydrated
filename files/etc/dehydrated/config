@@ -39,7 +39,7 @@ CHALLENGETYPE="{{ challenge_type }}"
 #BASEDIR=$SCRIPTDIR
 
 # File containing the list of domains to request certificates for (default: $BASEDIR/domains.txt)
-#DOMAINS_TXT="${BASEDIR}/domains.txt"
+DOMAINS_TXT="${BASEDIR}/domains_{{ challenge_type }}.txt"
 
 # Output directory for generated certificates
 #CERTDIR="${BASEDIR}/certs"
@@ -69,7 +69,7 @@ CHALLENGETYPE="{{ challenge_type }}"
 #
 # BASEDIR and WELLKNOWN variables are exported and can be used in an external program
 # default: <unset>
-HOOK=${BASEDIR}/hook.sh
+HOOK=${BASEDIR}/hook_{{ challenge_type }}.sh
 
 # Chain clean_challenge|deploy_challenge arguments together into one hook call per certificate (default: no)
 #HOOK_CHAIN="no"
