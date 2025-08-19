@@ -21,6 +21,24 @@ files = {
         'group': 'root',
         'mode': "0755",
     },
+
+    # delete old not needed files
+    '/etc/dehydrated/domains.txt': {
+        'delete': True,
+    },
+    '/etc/dehydrated/hook.sh': {
+        'delete': True,
+    },
+}
+
+# will break, if we do not have any challenge_types, which means we cannot register
+default_challenge_type = sorted(list(node.metadata.get('dehydrated/challenge_types', {}).keys()))[0]
+symlinks = {
+    '/etc/dehydrated/config': {
+        'target': f'/etc/dehydrated/config_{default_challenge_type}',
+        "group": "root",
+        "owner": "root",
+    },
 }
 
 actions = {}
@@ -113,16 +131,14 @@ if 'http-01' in node.metadata.get('dehydrated/challenge_types', {}):
         'group': 'root',
     }
 
-# will break, if we do not have any challenge_types, which means we cannot register
-challenge_type = list(node.metadata.get('dehydrated/challenge_types', {}).keys())[0]
 actions['accept_terms'] = {
-    'command': f'/opt/dehydrated/dehydrated -f /etc/dehydrated/config_{challenge_type} --register --accept-terms',
+    'command': f'/opt/dehydrated/dehydrated --register --accept-terms',
     'unless': 'test -f "$(/opt/dehydrated/dehydrated -e | '
               'grep \'ACCOUNT_KEY=\' | sed \'s/.*ACCOUNT_KEY="\\(.*\\)"/\\1/g\')"',
     'needs': [
         'directory:/opt/dehydrated',
         'git_deploy:/opt/dehydrated',
-        f'file:/etc/dehydrated/config_{challenge_type}',
+        'symlink:/etc/dehydrated/config',
         'pkg_apt:bsdextrautils',
     ],
 }
