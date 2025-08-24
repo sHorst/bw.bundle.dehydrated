@@ -10,11 +10,14 @@ available_hooks = [
     'exit_hook',
 ]
 
+# filter challenge_types for len(domains) > 0
+challenge_types = {k: x for k, x in node.metadata.get('dehydrated/challenge_types').items() if x.get('domains')}
+
 files = {
     '/etc/cron.daily/dehydrated': {
         'source': 'etc/cron.daily/dehydrated',
         'context': {
-            'challenge_types': sorted(list(node.metadata.get('dehydrated/challenge_types', {}).keys()))
+            'challenge_types': sorted(list(challenge_types.keys()))
         },
         'content_type': 'jinja2',
         'owner': 'root',
@@ -31,8 +34,14 @@ files = {
     },
 }
 
+# delete not existient files
+for c in ('http-01', 'dns-01'):
+    files[f'/etc/dehydrated/config_{c}'] = {'delete': True}
+    files[f'/etc/dehydrated/domains_{c}.txt'] = {'delete': True}
+    files[f'/etc/dehydrated/hook_{c}.sh'] = {'delete': True}
+
 # will break, if we do not have any challenge_types, which means we cannot register
-default_challenge_type = sorted(list(node.metadata.get('dehydrated/challenge_types', {}).keys()))[0]
+default_challenge_type = sorted(list(challenge_types.keys()))[0]
 symlinks = {
     '/etc/dehydrated/config': {
         'target': f'/etc/dehydrated/config_{default_challenge_type}',
@@ -53,7 +62,7 @@ for hook_name in available_hooks:
     ):
         default_hooks[hook_name] += hook_hooks
 
-for challenge_type, config in node.metadata.get('dehydrated/challenge_types', {}).items():
+for challenge_type, config in challenge_types.items():
     domains = set(config.get('domains', []))
 
     hooks = {}
@@ -124,7 +133,7 @@ directories = {
     }
 }
 
-if 'http-01' in node.metadata.get('dehydrated/challenge_types', {}):
+if 'http-01' in challenge_types:
     directories['/var/www/dehydrated'] = {
         'mode': '755',
         'owner': 'root',
